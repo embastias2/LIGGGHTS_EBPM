@@ -234,7 +234,7 @@ void FixBondCreateGran::init()
 {
   if(force->pair == NULL) error->all(FLERR,"Fix bond/create cutoff is longer than pairwise cutoff");
 
-  if(!(force->bond_match("gran")))
+  if(!(force->bond_match("gran")) && !(force->bond_match("tbbm")) )
      error->all(FLERR,"Fix bond/create can only be used together with dedicated 'granular' bond styles");
 
   // check cutoff for iatomtype,jatomtype - cutneighsq is used here only if doNorm is false

@@ -785,7 +785,7 @@ void BondTBBM::compute(int eflag, int vflag)
     }
   
   }
-  //Copy bond status to bond_intact
+  /*//Copy bond status to bond_intact
   int **bond_atom = atom->bond_atom;
   int **bond_intact = atom->bond_intact;
   int neighID,atom1,atom2;
@@ -808,7 +808,7 @@ void BondTBBM::compute(int eflag, int vflag)
         }
       }
     }
-  }
+  }*/
 }
 
 /* ---------------------------------------------------------------------- */
@@ -864,7 +864,7 @@ void BondTBBM::coeff(int narg, char **arg)
   int arg_id = 1;
   double ro_one = force->numeric(FLERR,arg[arg_id++]);
   double Y_one = force->numeric(FLERR,arg[arg_id++]);
-  double G_one = force->numeric(FLERR,arg[arg_id++]);
+  double G_one = force->numeric(FLERR,arg[arg_id]);
   
   
   if (ro_one <= 0){
@@ -876,12 +876,12 @@ void BondTBBM::coeff(int narg, char **arg)
   if (!allocated)
     allocate();
 
-  double compression_break_one = force->numeric(FLERR,arg[arg_id++]);
-  double CoV_compression_one = force->numeric(FLERR,arg[arg_id++]);
-  double tensile_break_one = force->numeric(FLERR,arg[arg_id++]);
-  double CoV_tensile_one = force->numeric(FLERR,arg[arg_id++]);
-  double shear_break_one = force->numeric(FLERR,arg[arg_id++]);
-  double CoV_shear_one = force->numeric(FLERR,arg[arg_id++]);
+  double compression_break_one = force->numeric(FLERR,arg[++arg_id]);
+  double CoV_compression_one = force->numeric(FLERR,arg[++arg_id]);
+  double tensile_break_one = force->numeric(FLERR,arg[++arg_id]);
+  double CoV_tensile_one = force->numeric(FLERR,arg[++arg_id]);
+  double shear_break_one = force->numeric(FLERR,arg[++arg_id]);
+  double CoV_shear_one = force->numeric(FLERR,arg[++arg_id]);
 
   
 
@@ -914,16 +914,13 @@ void BondTBBM::coeff(int narg, char **arg)
     shear_break[i] = shear_break_one;
     CoV_shear[i] = CoV_shear_one;
 
-    if (CoV_compression[i] < 0 || CoV_compression[i] > 1)
-    {
+    if (CoV_compression[i] < 0 || CoV_compression[i] > 1) {
       error->all(FLERR,"The range of values for CoV are zero to one");
     }
-    if (CoV_tensile[i] < 0 || CoV_tensile[i] > 1)
-    {
+    if (CoV_tensile[i] < 0 || CoV_tensile[i] > 1) {
       error->all(FLERR,"The range of values for CoV are zero to one");
     }
-    if (CoV_shear[i] < 0 || CoV_shear[i] > 1)
-    {
+    if (CoV_shear[i] < 0 || CoV_shear[i] > 1) {
       error->all(FLERR,"The range of values for CoV are zero to one");
     }
     
@@ -1000,14 +997,9 @@ void BondTBBM::read_restart(FILE *fp)
 
 /* ---------------------------------------------------------------------- */
 
-double BondTBBM::single(int type, double rsq, int i, int j,
-                          double &fforce)
+double BondTBBM::single(int type, double rsq, int i, int j, double &fforce)
 {
   error->all(FLERR,"Bond granular does not support this feature");
-  /*double r = sqrt(rsq);
-  double dr = r - r0[type];
-  double rk = k[type] * dr;
-  return rk*dr;*/
   return 0.0;
 }
 
