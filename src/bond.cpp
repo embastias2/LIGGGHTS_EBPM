@@ -73,6 +73,11 @@ Bond::Bond(LAMMPS *lmp) : Pointers(lmp)
   vatom = NULL;
   setflag = NULL;
 
+  broken_total = 0;
+  broken_compression = 0;
+  broken_shear = 0;
+  broken_tensile = 0;
+
   datamask = ALL_MASK;
   datamask_ext = ALL_MASK;
 

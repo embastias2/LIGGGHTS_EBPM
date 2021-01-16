@@ -314,6 +314,7 @@ void BondTBBM::compute(int eflag, int vflag)
     
     if (isnan(rinv)){
       fprintf(screen,"isnan rinv = %g\n",rinv);
+      fprintf(screen,"Bond %d  atom %d and %d\n",n,i1,i2);
       error->all(FLERR,"Fue rinv");
     } 
 
@@ -351,10 +352,10 @@ void BondTBBM::compute(int eflag, int vflag)
     {
       fprintf(screen,"\n*******************\nInicio resistencias\n*******************\n\n\n");
       
-      /*broken_compression = 0;
+      broken_compression = 0;
       broken_shear = 0;
       broken_tensile = 0;
-      broken_total = 0;*/
+      broken_total = 0;
 
       strength_flag = false;
       int type1,type2;
@@ -727,26 +728,25 @@ void BondTBBM::compute(int eflag, int vflag)
       bondhistlist[n][17] = 1.0;
       bondhistlist[n][18] = 1.0;
       bondhistlist[n][19] = 1.0;
-      //broken_total += 1;
+      broken_total += 1;
 
-      fprintf(screen,"broken bond %d at step %ld\n",n,update->ntimestep);
       if(comp_break)
       {
-        //broken_compression += 1;
-        fprintf(screen, "   it was compression stress\n");
-        fprintf(screen,"   compression_break == %e\n      mag_force == %e\n",compression_strength,comp_stress);
+        broken_compression += 1;
+        //fprintf(screen, "   it was compression stress\n");
+        //fprintf(screen,"   compression_break == %e\n      mag_force == %e\n",compression_strength,comp_stress);
       }
       if(tens_break)
       {
-        //broken_tensile += 1;
-        fprintf(screen, "   it was tensile stress\n");
-        fprintf(screen,"   tensile_break == %e\n      mag_force == %e\n",tensile_strength,tens_stress);
+        broken_tensile += 1;
+        //fprintf(screen, "   it was tensile stress\n");
+        //fprintf(screen,"   tensile_break == %e\n      mag_force == %e\n",tensile_strength,tens_stress);
       }
       if(tau_break)
       {
-        //broken_shear += 1;
-        fprintf(screen,"   it was shear stress\n");
-        fprintf(screen,"   shear_break == %e\n      mag_force == %e\n",shear_strength,shear_stress);
+        broken_shear += 1;
+        //fprintf(screen,"   it was shear stress\n");
+        //fprintf(screen,"   shear_break == %e\n      mag_force == %e\n",shear_strength,shear_stress);
       }
       continue;
     }else
@@ -785,6 +785,37 @@ void BondTBBM::compute(int eflag, int vflag)
     }
   
   }
+  for (int n = 0; n < nbondlist; n++){
+    if (bondlist[n][3] == 1){
+      i1 = bondlist[n][0]; // Sphere 1
+      i2 = bondlist[n][1]; // Sphere 2
+      if (i1 < nlocal) {
+        for (int k1 = 0; k1 < atom->num_bond[i1]; k1++)
+        {
+          int j2 = atom->map(atom->bond_atom[i1][k1]); //mapped index of bond-partner
+          if (i2 == j2)
+          {
+              atom->bond_type[i1][k1] = 0;
+              break;
+          }
+        }
+      }
+      if (i2 < nlocal) {
+        for (int k1 = 0; k1 < atom->num_bond[i2]; k1++)
+        {
+          int j1 = atom->map(atom->bond_atom[i2][k1]); //mapped index of bond-partner
+          if (i1 == j1)
+          {
+              atom->bond_type[i2][k1] = 0;
+              break;
+          }
+        }
+      }
+    }
+  }
+  
+
+
   /*//Copy bond status to bond_intact
   int **bond_atom = atom->bond_atom;
   int **bond_intact = atom->bond_intact;

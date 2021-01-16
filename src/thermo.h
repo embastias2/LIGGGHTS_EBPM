@@ -209,6 +209,10 @@ class Thermo : protected Pointers {
   void compute_cellbeta();
   void compute_cellgamma();
   void compute_numbond();
+  void compute_broken_bonds();
+  void compute_broken_compression();
+  void compute_broken_shear();
+  void compute_broken_tensile();
   void compute_bondEnergy();
 };
 

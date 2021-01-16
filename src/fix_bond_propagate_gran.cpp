@@ -87,6 +87,10 @@ inline void FixBondPropagateGran::neigh2atom()
 
   int newton_bond = force->newton_bond;
 
+  double delx,dely,delz,rsq,radsum;
+  double **x = atom->x;
+  double *radius = atom->radius;
+
   //NP task 1
   //NP propagate bond contact history
   if (!n_bondhist)
@@ -96,10 +100,14 @@ inline void FixBondPropagateGran::neigh2atom()
   {
     i1 = bondlist[n][0];
     i2 = bondlist[n][1];
-    int broken = bondlist[n][3];
-
-    if (broken == 1)
+    delx = x[i2][0] - x[i1][0];
+    dely = x[i2][1] - x[i1][1];
+    delz = x[i2][2] - x[i1][2];
+    rsq = delx*delx + dely*dely + delz*delz;
+    radsum = radius[i1] + radius[i2];
+    if (rsq > radsum * radsum && bondlist[n][3] == 1) {
       continue; //do not copy broken bonds
+    }
 
     if (newton_bond || i1 < nlocal)
     {
@@ -200,14 +208,25 @@ void FixBondPropagateGran::pre_exchange()
   //NP remove broken bonds
   //NP should be done equally on all processors
 
+  
+  double delx,dely,delz,rsq,radsum;
+  double **x = atom->x;
+  double *radius = atom->radius;
+
   //NP P.F. create list for all BOND-IDs,erase all the broken bonds compress bondlist with new value list
   std::vector<unsigned int> list_bond_id;
   std::vector<unsigned int>::iterator it1;
 
   for (n = 0; n < nbondlist; n++)
   {
-    if (bondlist[n][3] == 1)
-    {
+    i1 = bondlist[n][0];
+    i2 = bondlist[n][1];
+    delx = x[i2][0] - x[i1][0];
+    dely = x[i2][1] - x[i1][1];
+    delz = x[i2][2] - x[i1][2];
+    rsq = delx*delx + dely*dely + delz*delz;
+    radsum = radius[i1] + radius[i2];
+    if (rsq > radsum * radsum && bondlist[n][3] == 1) {
       list_bond_id.push_back(n); // load all broken bond ids into the list
     }
   }
@@ -346,51 +365,55 @@ void FixBondPropagateGran::restart(char *buf)
 void FixBondPropagateGran::post_run()
 {
   neigh2atom();
-  // int **bondlist = neighbor->bondlist;
-  // double **bondhistlist = neighbor->bondhistlist;
+  /*int **bondlist = neighbor->bondlist;
+  double **bondhistlist = neighbor->bondhistlist;
 
-  // int nbondlist = neighbor->nbondlist;
+  int nbondlist = neighbor->nbondlist;
 
-  // int i, m, k, neighID, atom1, atom2, atom11, atom22;
+  int i, m, k, neighID, atom1, atom2, atom11, atom22;
 
-  // int nlocal = atom->nlocal;
-  // int *num_bond = atom->num_bond;
-  // int **bond_atom = atom->bond_atom;
-  // int **bond_type = atom->bond_type;
-  // double ***bond_hist = atom->bond_hist;
-  // int *tag = atom->tag;
-  // int newton_bond = force->newton_bond;
-  // int n_bondhist = atom->n_bondhist;
+  int nlocal = atom->nlocal;
+  int *num_bond = atom->num_bond;
+  int **bond_atom = atom->bond_atom;
+  int **bond_type = atom->bond_type;
+  double ***bond_hist = atom->bond_hist;
+  int *tag = atom->tag;
+  int newton_bond = force->newton_bond;
+  int n_bondhist = atom->n_bondhist;
 
-  // for (i = 0; i < nlocal; i++)
-  // {
-  //   atom1 = i;
-  //   for (m = 0; m < num_bond[atom1]; m++)
-  //   {
-  //     atom2 = atom->map(bond_atom[atom1][m]);
-  //     if (newton_bond || i < atom2)
-  //     {
+  for (i = 0; i < nlocal; i++)
+  {
+    atom1 = i;
+    for (m = 0; m < num_bond[atom1]; m++)
+    {
+      atom2 = atom->map(bond_atom[atom1][m]);
+      if (newton_bond || i < atom2)
+      {
 
-  //       neighID = -1;
-  //       for (k = 0; k < nbondlist; k++)
-  //       {
-  //         if ((bondlist[k][0] == atom1 && bondlist[k][1] == atom2) || ((bondlist[k][1] == atom1 && bondlist[k][0] == atom2)))
-  //         {
-  //           neighID = k;
+        neighID = -1;
+        for (k = 0; k < nbondlist; k++)
+        {
+          if ((bondlist[k][0] == atom1 && bondlist[k][1] == atom2) || ((bondlist[k][1] == atom1 && bondlist[k][0] == atom2)))
+          {
+            neighID = k;
 
-  //           bond_type[i][m] = bondlist[neighID][2];
-  //           if (n_bondhist)
-  //           {
-  //             for (int j = 0; j < n_bondhist; j++)
-  //             {
-  //               bond_hist[i][m][j] = bondhistlist[neighID][j];
-  //             }
-  //           }
+            if (bondlist[neighID][3] == 1){
+              bond_type[i][m] = 0;
+            } else {
+              bond_type[i][m] = bondlist[neighID][2];
+            }
+            if (n_bondhist)
+            {
+              for (int j = 0; j < n_bondhist; j++)
+              {
+                bond_hist[i][m][j] = bondhistlist[neighID][j];
+              }
+            }
 
-  //           break;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
+            break;
+          }
+        }
+      }
+    }
+  }*/
 }

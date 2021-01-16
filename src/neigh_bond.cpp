@@ -88,6 +88,7 @@ void Neighbor::bond_all()
     for (m = 0; m < num_bond[i]; m++) {
       atom1 = atom->map(bond_atom[i][m]);
       if (atom1 == -1) {
+        if (bond_type[i][m] == 0) continue;
         char str[512];
         sprintf(str,
                 "Bond atoms %d %d missing on proc %d at step " BIGINT_FORMAT,
@@ -105,7 +106,12 @@ void Neighbor::bond_all()
         bondlist[nbondlist][0] = i;
         bondlist[nbondlist][1] = atom1;
         bondlist[nbondlist][2] = bond_type[i][m];
-        bondlist[nbondlist][3] = 0; 
+        if (bond_type[i][m] == 0){
+          bondlist[nbondlist][3] = 1; 
+        } else {
+          bondlist[nbondlist][3] = 0; 
+        }
+        
         if(n_bondhist) { 
             for(int j = 0; j < n_bondhist; j++)
             {
@@ -134,11 +140,27 @@ void Neighbor::bond_partial()
   int newton_bond = force->newton_bond;
   int n_bondhist = atom->n_bondhist; 
 
+  double delx,dely,delz,rsq,radsum;
+  double **x = atom->x;
+  double *radius = atom->radius;
+  int i1, i2;
+
   nbondlist = 0;
 
   for (i = 0; i < nlocal; i++)
     for (m = 0; m < num_bond[i]; m++) {
-      if (bond_type[i][m] == 0) continue;
+      i1 = i;
+      i2 = bond_atom[i][m];
+      delx = x[i2][0] - x[i1][0];
+      dely = x[i2][1] - x[i1][1];
+      delz = x[i2][2] - x[i1][2];
+      rsq = delx*delx + dely*dely + delz*delz;
+      radsum = radius[i1] + radius[i2];
+      if (rsq > radsum * radsum && bond_type[i][m] == 0) {
+        continue; //do not copy broken bonds
+      }
+      
+      //if (bond_type[i][m] == 0) continue;
       atom1 = atom->map(bond_atom[i][m]);
       if (atom1 == -1) {
         char str[512];
@@ -156,7 +178,12 @@ void Neighbor::bond_partial()
         bondlist[nbondlist][0] = i;
         bondlist[nbondlist][1] = atom1;
         bondlist[nbondlist][2] = bond_type[i][m];
-        bondlist[nbondlist][3] = 0; 
+        if (bond_type[i][m] == 0) {
+          bondlist[nbondlist][3] = 1;
+        } else {
+          bondlist[nbondlist][3] = 0; 
+        }
+        
         if(n_bondhist) { 
             for(int j = 0; j < n_bondhist; j++)
                 bondhistlist[nbondlist][j] = bond_hist[i][m][j];

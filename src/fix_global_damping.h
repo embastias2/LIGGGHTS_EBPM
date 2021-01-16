@@ -43,76 +43,72 @@
     the GNU General Public License.
 ------------------------------------------------------------------------- */
 
-#ifndef LMP_BOND_H
-#define LMP_BOND_H
+#ifdef FIX_CLASS
 
-#include <stdio.h>
-#include "pointers.h"
+FixStyle(globaldamping,FixGlobalDamping)
+
+#else
+
+#ifndef LMP_FIX_GLOBALDAMPING_H
+#define LMP_FIX_GLOBALDAMPING_H
+
+#include "fix.h"
 
 namespace LAMMPS_NS {
 
-class Bond : protected Pointers {
-  friend class ThrOMP;
-  friend class FixOMP;
+class FixGlobalDamping : public Fix {
  public:
-  int allocated;
-  int *setflag;
-  bigint broken_total, broken_compression, broken_shear, broken_tensile;
-  int writedata;                  // 1 if writes coeffs to data file
-  double energy;                  // accumulated energies
-  double virial[6];               // accumlated virial
-  double *eatom,**vatom;          // accumulated per-atom energy/virial
-  unsigned int datamask;
-  unsigned int datamask_ext;
-
-  Bond(class LAMMPS *);
-  virtual ~Bond();
-  virtual void init();
-  virtual void init_style() {}
-  virtual void compute(int, int) = 0;
-  virtual void settings(int, char **) {}
-  virtual void coeff(int, char **) = 0;
-  virtual double equilibrium_distance(int) = 0;
-  virtual void write_restart(FILE *) = 0;
-  virtual void read_restart(FILE *) = 0;
-  virtual void write_data(FILE *) {}
-  virtual double single(int, double, int, int, double &) = 0;
-  virtual double memory_usage();
-  virtual unsigned int data_mask() {return datamask;}
-  virtual unsigned int data_mask_ext() {return datamask_ext;}
-  virtual double getMinDt() {return 1.0;}
-
- protected:
-  int suffix_flag;             // suffix compatibility flag
-
-  int evflag;
-  int eflag_either,eflag_global,eflag_atom;
-  int vflag_either,vflag_global,vflag_atom;
-  int maxeatom,maxvatom;
-
-  void n_granhistory(int);   
-  void ev_setup(int, int);
-  void ev_tally(int, int, int, int, double, double, double, double, double);
+  FixGlobalDamping(class LAMMPS *, int, char **);
+  ~FixGlobalDamping();
+  int setmask();
+  void init();
+  void setup(int);
+  void min_setup(int);
+  void post_force(int);
+  void post_force_respa(int, int, int);
+  void min_post_force(int);
+  double memory_usage();
 
  private:
-   
-   int ngranhistory; //0 if not a granular history bond, # of hist values if >0
+  double damp;
+  int varflag;
+  int nlevels_respa;
+
 };
 
 }
 
 #endif
+#endif
 
 /* ERROR/WARNING messages:
 
-E: Bond coeffs are not set
+E: Illegal ... command
 
-No bond coefficients have been assigned in the data file or via the
-bond_coeff command.
+Self-explanatory.  Check the input script syntax and compare to the
+documentation for the command.  You can use -echo screen as a
+command-line option when running LAMMPS to see the offending line.
 
-E: All bond coeffs are not set
+E: Region ID for fix addforce does not exist
 
-All bond coefficients must be set in the data file or by the
-bond_coeff command before running a simulation.
+Self-explanatory.
+
+E: Variable name for fix addforce does not exist
+
+Self-explanatory.
+
+E: Variable for fix addforce is invalid style
+
+Self-explanatory.
+
+E: Cannot use variable energy with constant force in fix addforce
+
+This is because for constant force, LAMMPS can compute the change
+in energy directly.
+
+E: Must use variable energy with fix addforce
+
+Must define an energy vartiable when applyting a dynamic
+force during minimization.
 
 */

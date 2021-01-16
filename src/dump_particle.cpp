@@ -109,6 +109,7 @@ enum{X,Y,Z, // required for vtk, must come first
      OMEGAX,OMEGAY,OMEGAZ,ANGMOMX,ANGMOMY,ANGMOMZ,
      TQX,TQY,TQZ,SPIN,ERADIUS,ERVEL,ERFORCE,
      DENSITY, RHO, P, 
+     BOND_DAMAGE,
      VARIABLE,COMPUTE,FIX,
      SHAPEX, SHAPEY, SHAPEZ,
      QUAT1, QUAT2, QUAT3, QUAT4,
@@ -352,6 +353,10 @@ int DumpParticle::parse_parameters(const int narg, const char *const *const arg,
                 pack_choice[P] = &DumpParticle::pack_p;
                 vtype[P] = DOUBLE;
                 name[P] = arg[iarg];
+            } else if (strcmp(arg[iarg],"bond_damage") == 0) {
+                pack_choice[BOND_DAMAGE] = &DumpParticle::pack_bond_damage;
+                vtype[BOND_DAMAGE] = DOUBLE;
+                name[BOND_DAMAGE] = arg[iarg];
             } else if (strcmp(arg[iarg],"rho") == 0) {
                 if (!atom->rho_flag)
                     error->all(FLERR,"Dumping an atom property that isn't allocated");
@@ -1135,6 +1140,29 @@ int DumpParticle::count()
                     error->all(FLERR,"Threshold for an atom property that isn't allocated");
                 ptr = atom->p;
                 nstride = 1;
+            } else if (thresh_array[ithresh] == BOND_DAMAGE) { 
+                bigint totalbond;
+                double invtotalbond;
+                bigint intactbond;
+                int nlocal = atom->nlocal;                    
+                for (int i = 0; i < nlocal; i++) {
+                    totalbond = 0;
+                    intactbond = 0;
+                    for (int j = 0; j < atom->num_bond[i]; j++) {
+                        totalbond += 1;
+                        if (atom->bond_type[i][j] > 0) intactbond++;
+                    }                    
+                    if (totalbond == 0) {
+                        dchoose[i] = 0;
+                    }else {
+                        invtotalbond = 1./totalbond;
+                        dchoose[i] = 1 - intactbond*invtotalbond;
+                    }
+                }
+                
+                ptr = dchoose;
+                nstride = 1;
+                
             } else if (thresh_array[ithresh] == RHO) { 
                 if (!atom->rho_flag)
                     error->all(FLERR,
@@ -2052,6 +2080,7 @@ int DumpParticle::modify_param(int narg, char **arg)
         else if (strcmp(arg[1],"q") == 0) thresh_array[nthresh] = Q;
         else if (strcmp(arg[1],"density") == 0) thresh_array[nthresh] = DENSITY; 
         else if (strcmp(arg[1],"p") == 0) thresh_array[nthresh] = P; 
+        else if (strcmp(arg[1],"bond_damage") == 0) thresh_array[nthresh] = BOND_DAMAGE; 
         else if (strcmp(arg[1],"rho") == 0) thresh_array[nthresh] = RHO; 
         else if (strcmp(arg[1],"mux") == 0) thresh_array[nthresh] = MUX;
         else if (strcmp(arg[1],"muy") == 0) thresh_array[nthresh] = MUY;
@@ -2864,6 +2893,33 @@ void DumpParticle::pack_p(int n)
 
     for (int i = 0; i < nchoose; i++) {
         buf[n] = p[clist[i]];
+        n += size_one;
+    }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void DumpParticle::pack_bond_damage(int n) 
+{
+    bigint totalbond;
+    bigint intactbond;
+    double invtotalbond;
+    double damage;
+                
+    for (int i = 0; i < nchoose; i++) {
+        totalbond = 0;
+        intactbond = 0;
+        for (int j = 0; j < atom->num_bond[clist[i]]; j++) {
+            totalbond += 1;
+            if (atom->bond_type[clist[i]][j] > 0) intactbond++;
+        }
+        if (totalbond == 0) {
+            damage = 0;
+        }else {
+            invtotalbond = 1./totalbond;
+            damage = 1 - intactbond*invtotalbond;
+        }
+        buf[n] = damage;
         n += size_one;
     }
 }

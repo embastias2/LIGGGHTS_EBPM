@@ -167,12 +167,28 @@ int AtomVec::pack_bond(int **buf)
   int nlocal = atom->nlocal;
   int newton_bond = force->newton_bond;
 
+  double delx,dely,delz,rsq,radsum;
+  double **x = atom->x;
+  double *radius = atom->radius;
+  int i1, i2;
+
   int i,j;
   int m = 0;
   if (newton_bond) {
     for (i = 0; i < nlocal; i++)
       for (j = 0; j < num_bond[i]; j++) {
-        if (bond_type[i][j] == 0) continue;
+        i1 = i;
+        i2 = bond_atom[i][j];
+        delx = x[i2][0] - x[i1][0];
+        dely = x[i2][1] - x[i1][1];
+        delz = x[i2][2] - x[i1][2];
+        rsq = delx*delx + dely*dely + delz*delz;
+        radsum = radius[i1] + radius[i2];
+        if (rsq > radsum * radsum && bond_type[i][j] == 0) {
+          continue; //do not copy broken bonds
+        }
+        
+        //if (bond_type[i][j] == 0) continue;
         if (buf) {
           buf[m][0] = MAX(bond_type[i][j],-bond_type[i][j]);
           buf[m][1] = tag[i];
@@ -184,7 +200,17 @@ int AtomVec::pack_bond(int **buf)
     for (i = 0; i < nlocal; i++)
       for (j = 0; j < num_bond[i]; j++)
         if (tag[i] < bond_atom[i][j]) {
-          if (bond_type[i][j] == 0) continue;
+          i1 = i;
+          i2 = bond_atom[i][j];
+          delx = x[i2][0] - x[i1][0];
+          dely = x[i2][1] - x[i1][1];
+          delz = x[i2][2] - x[i1][2];
+          rsq = delx*delx + dely*dely + delz*delz;
+          radsum = radius[i1] + radius[i2];
+          if (rsq > radsum * radsum && bond_type[i][j] == 0) {
+            continue; //do not copy broken bonds
+          }
+          //if (bond_type[i][j] == 0) continue;
           if (buf) {
             buf[m][0] = MAX(bond_type[i][j],-bond_type[i][j]);
             buf[m][1] = tag[i];

@@ -641,6 +641,14 @@ void Thermo::parse_fields(char *str)
       addfield("Dt",&Thermo::compute_dt,FLOAT);
     } else if (strcmp(word,"numbonds") == 0) {  // added for bond_package
       addfield("numbonds",&Thermo::compute_numbond,BIGINT);  // added for bond_package
+    } else if (strcmp(word,"broken_bonds") == 0) {  // added for bond_package
+      addfield("Broken_bonds",&Thermo::compute_broken_bonds,BIGINT);  // added for bond_package
+    } else if (strcmp(word,"broken_compression") == 0) {  // added for bond_package
+      addfield("Broken_compression",&Thermo::compute_broken_compression,BIGINT);  // added for bond_package
+    } else if (strcmp(word,"broken_shear") == 0) {  // added for bond_package
+      addfield("Broken_shear",&Thermo::compute_broken_shear,BIGINT);  // added for bond_package
+    } else if (strcmp(word,"broken_tensile") == 0) {  // added for bond_package
+      addfield("Broken_tensile",&Thermo::compute_broken_tensile,BIGINT);  // added for bond_package
     } else if (strcmp(word,"time") == 0) {
       addfield("Time",&Thermo::compute_time,FLOAT);
     } else if (strcmp(word,"bondEnergy") == 0) {  // added for bond_package
@@ -821,7 +829,12 @@ void Thermo::parse_fields(char *str)
 
       delete [] id;
 
-    } else error->all(FLERR,"Invalid keyword in thermo_style custom command");
+    } else{
+      char str2[512];
+      sprintf(str2,
+            "Invalid keyword: %s in thermo_style custom command",word);
+      error->all(FLERR,str2);
+    }
 
     word = strtok(NULL," \0");
   }
@@ -1038,8 +1051,27 @@ int Thermo::evaluate_keyword(char *word, double *answer)
   else if (strcmp(word,"cellalpha") == 0) compute_cellalpha();
   else if (strcmp(word,"cellbeta") == 0) compute_cellbeta();
   else if (strcmp(word,"cellgamma") == 0) compute_cellgamma();
-  else if (strcmp(word,"numbonds") == 0) compute_numbond();	// added for bond package
-  else if (strcmp(word,"bondEnergy") == 0) compute_bondEnergy(); // added for bond package
+  else if (strcmp(word,"numbonds") == 0) {	// added for bond package
+    compute_numbond();
+    dvalue = bivalue;
+
+  } else if (strcmp(word,"broken_bonds") == 0) {	// added for bond package
+    compute_broken_bonds();
+    dvalue = bivalue;
+
+  } else if (strcmp(word,"broken_compression") == 0) {	// added for bond package
+    compute_broken_compression();
+    dvalue = bivalue;
+
+  } else if (strcmp(word,"broken_shear") == 0) {	// added for bond package
+    compute_broken_shear();
+    dvalue = bivalue;
+
+  } else if (strcmp(word,"broken_tensile") == 0) {	// added for bond package
+    compute_broken_tensile();
+    dvalue = bivalue;
+
+  } else if (strcmp(word,"bondEnergy") == 0) compute_bondEnergy(); // added for bond package
 
   else return 1;
 
@@ -1427,6 +1459,51 @@ void Thermo::compute_numbond()
   } else {
     bivalue = 0;
   }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void Thermo::compute_broken_bonds()
+{
+  bigint broken_total = force->bond->broken_total;
+
+  bigint bondall;
+  MPI_Allreduce(&broken_total,&bondall,1,MPI_LMP_BIGINT,MPI_SUM,world);
+  bivalue = bondall; 
+}
+
+/* ---------------------------------------------------------------------- */
+
+void Thermo::compute_broken_compression()
+{
+  bigint broken_compression = force->bond->broken_compression;
+
+  bigint bondall;
+  MPI_Allreduce(&broken_compression,&bondall,1,MPI_LMP_BIGINT,MPI_SUM,world);
+  bivalue = bondall;
+  
+}
+
+/* ---------------------------------------------------------------------- */
+
+void Thermo::compute_broken_shear()
+{
+  bigint broken_shear = force->bond->broken_shear;
+
+  bigint bondall;
+  MPI_Allreduce(&broken_shear,&bondall,1,MPI_LMP_BIGINT,MPI_SUM,world);
+  bivalue = bondall;
+}
+
+/* ---------------------------------------------------------------------- */
+
+void Thermo::compute_broken_tensile()
+{
+  bigint broken_tensile = force->bond->broken_tensile;
+
+  bigint bondall;
+  MPI_Allreduce(&broken_tensile,&bondall,1,MPI_LMP_BIGINT,MPI_SUM,world);
+  bivalue = bondall;
 }
 
 /* ---------------------------------------------------------------------- */

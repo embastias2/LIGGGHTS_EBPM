@@ -230,6 +230,7 @@ class DumpParticle : public Pointers {
     void pack_q(int);
     void pack_density(int); 
     void pack_p(int);       
+    void pack_bond_damage(int);      
     void pack_rho(int);     
     void pack_mux(int);
     void pack_muy(int);
