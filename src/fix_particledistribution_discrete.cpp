@@ -558,7 +558,7 @@ void FixParticledistributionDiscrete::pre_insert(int n,class FixPropertyAtom *fp
 
         for (n = 0; n < nbondlist; n++) {
             
-            i1 = bondlist[n][0];
+            /*i1 = bondlist[n][0];
             i2 = bondlist[n][1];
             delx = x[i2][0] - x[i1][0];
             dely = x[i2][1] - x[i1][1];
@@ -567,7 +567,7 @@ void FixParticledistributionDiscrete::pre_insert(int n,class FixPropertyAtom *fp
             radsum = radius[i1] + radius[i2];
             if (rsq > radsum * radsum && bondlist[n][3] == 1) {
             continue; //do not copy broken bonds
-            }
+            }*/
 
           if ((newton_bond || i1 < nlocal) && i2 >= nlocal)
           {

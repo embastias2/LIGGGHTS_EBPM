@@ -149,7 +149,7 @@ void Neighbor::bond_partial()
 
   for (i = 0; i < nlocal; i++)
     for (m = 0; m < num_bond[i]; m++) {
-      i1 = i;
+      /*i1 = i;
       i2 = bond_atom[i][m];
       delx = x[i2][0] - x[i1][0];
       dely = x[i2][1] - x[i1][1];
@@ -158,7 +158,7 @@ void Neighbor::bond_partial()
       radsum = radius[i1] + radius[i2];
       if (rsq > radsum * radsum && bond_type[i][m] == 0) {
         continue; //do not copy broken bonds
-      }
+      }*/
       
       //if (bond_type[i][m] == 0) continue;
       atom1 = atom->map(bond_atom[i][m]);
@@ -173,7 +173,7 @@ void Neighbor::bond_partial()
       if (newton_bond || i < atom1) {
         if (nbondlist == maxbond) {
           maxbond += BONDDELTA;
-          memory->grow(bondlist,maxbond,3,"neighbor:bondlist");
+          memory->grow(bondlist,maxbond,4,"neighbor:bondlist");
         }
         bondlist[nbondlist][0] = i;
         bondlist[nbondlist][1] = atom1;

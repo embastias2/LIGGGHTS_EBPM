@@ -105,9 +105,9 @@ inline void FixBondPropagateGran::neigh2atom()
     delz = x[i2][2] - x[i1][2];
     rsq = delx*delx + dely*dely + delz*delz;
     radsum = radius[i1] + radius[i2];
-    if (rsq > radsum * radsum && bondlist[n][3] == 1) {
+    /*if (rsq > radsum * radsum && bondlist[n][3] == 1) {
       continue; //do not copy broken bonds
-    }
+    }*/
 
     if (newton_bond || i1 < nlocal)
     {
@@ -204,7 +204,7 @@ void FixBondPropagateGran::pre_exchange()
   // }
   neigh2atom();
 
-  //NP task 2
+  /*//NP task 2
   //NP remove broken bonds
   //NP should be done equally on all processors
 
@@ -292,7 +292,7 @@ void FixBondPropagateGran::pre_exchange()
       if (!found)
         error->one(FLERR, "Failed to operate on granular bond history during deletion2");
     }
-  }
+  }*/
 }
 
 inline void FixBondPropagateGran::remove_bond(int ilocal, int ibond, int bondnumber) //NP P.F. added bondnumber

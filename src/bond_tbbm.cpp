@@ -120,7 +120,96 @@ BondTBBM::~BondTBBM()
 
 void  BondTBBM::init_style()
 {
+  if (strength_flag) { //Normal distribution of strength 
+          
+    int **bondlist = neighbor->bondlist;
+    double **bondhistlist = neighbor->bondhistlist;
+    int nbondlist = neighbor->nbondlist;
+    fprintf(screen,"\n*******************\nInicio resistencias\n*******************\n\n");
+    
+    broken_compression = 0;
+    broken_shear = 0;
+    broken_tensile = 0;
+    broken_total = 0;
+
+    strength_flag = false;
+    int type1,type2;
+
+    int n2 = 3*nbondlist;
+    int n3 = nbondlist;
+    
+    if (nbondlist%2 != 0)
+    {
+      n3 += 1;
+    }
+    
+    random_number = new double[n2];
+    N = new double[n3];
+    Strength_c = new double[n3];
+    Strength_t = new double[n3];
+    Strength_s = new double[n3];
+    srand(time(0));  
+      
+    for ( int l = 0; l < n2; l++) {
+      random_number[l] = rand() / static_cast<double>(RAND_MAX);
+    }
   
+    int j=0;
+    for (int i = 0; i < n3 / 2; i++) {
+      if (i == (nbondlist + 1)/2-1)
+      {
+        type1 = bondlist[2*i][2];
+        type2 = bondlist[2*i][2];
+      } else {
+        type1 = bondlist[2*i][2];
+        type2 = bondlist[2*i+1][2];          
+      }        
+      
+      N[2 * i] = sqrt(-2.0 * log(random_number[2 * j])) * sin(2 * M_PI * random_number[2 * j + 1]);
+      N[2 * i + 1] = sqrt(-2.0 * log(random_number[2 * j])) * cos(2 * M_PI * random_number[2 * j + 1]);
+      Strength_c[2 * i] = compression_break[type1]*(N[2*i]*CoV_compression[type1]+1);
+      Strength_c[2 * i + 1] = compression_break[type2]*(N[2*i+1]*CoV_compression[type2]+1);
+      Strength_t[2 * i] = tensile_break[type1]*(N[2*i]*CoV_tensile[type1]+1);
+      Strength_t[2 * i + 1] = tensile_break[type2]*(N[2*i+1]*CoV_tensile[type2]+1);
+      Strength_s[2 * i] = shear_break[type1]*(N[2*i]*CoV_shear[type1]+1);
+      Strength_s[2 * i + 1] = shear_break[type2]*(N[2*i+1]*CoV_shear[type2]+1);
+      while ((Strength_c[2 * i ] < 0) || (Strength_c[2 * i] > 2*compression_break[type1]) || isnan(Strength_c[2*i])|| (Strength_c[2 * i + 1] < 0) || (Strength_c[2 * i + 1] > 2*compression_break[type2]) || isnan(Strength_c[2*i+1])
+            || (Strength_t[2 * i ] < 0) || (Strength_t[2 * i] > 2*tensile_break[type1]) || (Strength_t[2 * i + 1] < 0) || (Strength_t[2 * i + 1] > 2*tensile_break[type2])
+            || (Strength_s[2 * i ] < 0) || (Strength_s[2 * i] > 2*shear_break[type1]) || (Strength_s[2 * i + 1] < 0) || (Strength_s[2 * i + 1] > 2*shear_break[type2])        ){
+        j=j+1;
+        N[2 * i] = sqrt(-2.0 * log(random_number[2 * j])) * sin(2 * M_PI * random_number[2 * j + 1]);
+        N[2 * i + 1] = sqrt(-2.0 * log(random_number[2 * j])) * cos(2 * M_PI * random_number[2 * j + 1]);
+        Strength_c[2 * i] = compression_break[type1]*(N[2*i]*CoV_compression[type1]+1);
+        Strength_c[2 * i + 1] = compression_break[type2]*(N[2*i+1]*CoV_compression[type2]+1);
+        Strength_t[2 * i] = tensile_break[type1]*(N[2*i]*CoV_tensile[type1]+1);
+        Strength_t[2 * i + 1] = tensile_break[type2]*(N[2*i+1]*CoV_tensile[type2]+1);
+        Strength_s[2 * i] = shear_break[type1]*(N[2*i]*CoV_shear[type1]+1);
+        Strength_s[2 * i + 1] = shear_break[type2]*(N[2*i+1]*CoV_shear[type2]+1);
+      }
+      j=j+1;  
+
+    }
+    
+    for (int l = 0; l < nbondlist; l++)
+    {
+      bondhistlist[l][ 0] = 0.0;
+      bondhistlist[l][ 1] = 0.0;
+      bondhistlist[l][ 2] = 0.0;
+      bondhistlist[l][ 3] = 0.0;
+      bondhistlist[l][ 4] = 0.0;
+      bondhistlist[l][ 5] = 0.0;
+      bondhistlist[l][ 6] = 0.0;
+      bondhistlist[l][ 7] = 0.0;
+      bondhistlist[l][ 8] = 0.0;
+      bondhistlist[l][ 9] = 0.0;
+      bondhistlist[l][10] = 0.0;
+      bondhistlist[l][11] = 0.0;
+      bondhistlist[l][20] = Strength_c[l];
+      bondhistlist[l][21] = Strength_t[l];
+      bondhistlist[l][22] = Strength_s[l];
+    }
+      
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -348,93 +437,7 @@ void BondTBBM::compute(int eflag, int vflag)
     phi_pinv = 1./(1 + phi);
 
     
-    if (strength_flag)  //Normal distribution of strength 
-    {
-      fprintf(screen,"\n*******************\nInicio resistencias\n*******************\n\n\n");
-      
-      broken_compression = 0;
-      broken_shear = 0;
-      broken_tensile = 0;
-      broken_total = 0;
-
-      strength_flag = false;
-      int type1,type2;
-
-      int n2 = 3*nbondlist;
-      int n3 = nbondlist;
-      
-      if (nbondlist%2 != 0)
-      {
-        n3 += 1;
-      }
-      
-      random_number = new double[n2];
-      N = new double[n3];
-      Strength_c = new double[n3];
-      Strength_t = new double[n3];
-      Strength_s = new double[n3];
-      srand(time(0));  
-        
-      for ( int l = 0; l < n2; l++) {
-        random_number[l] = rand() / static_cast<double>(RAND_MAX);
-      }
     
-      int j=0;
-      for (int i = 0; i < n3 / 2; i++) {
-        if (i == (nbondlist + 1)/2-1)
-        {
-          type1 = bondlist[2*i][2];
-          type2 = bondlist[2*i][2];
-        } else {
-          type1 = bondlist[2*i][2];
-          type2 = bondlist[2*i+1][2];          
-        }        
-        
-        N[2 * i] = sqrt(-2.0 * log(random_number[2 * j])) * sin(2 * M_PI * random_number[2 * j + 1]);
-        N[2 * i + 1] = sqrt(-2.0 * log(random_number[2 * j])) * cos(2 * M_PI * random_number[2 * j + 1]);
-        Strength_c[2 * i] = compression_break[type1]*(N[2*i]*CoV_compression[type1]+1);
-        Strength_c[2 * i + 1] = compression_break[type2]*(N[2*i+1]*CoV_compression[type2]+1);
-        Strength_t[2 * i] = tensile_break[type1]*(N[2*i]*CoV_tensile[type1]+1);
-        Strength_t[2 * i + 1] = tensile_break[type2]*(N[2*i+1]*CoV_tensile[type2]+1);
-        Strength_s[2 * i] = shear_break[type1]*(N[2*i]*CoV_shear[type1]+1);
-        Strength_s[2 * i + 1] = shear_break[type2]*(N[2*i+1]*CoV_shear[type2]+1);
-        while ((Strength_c[2 * i ] < 0) || (Strength_c[2 * i] > 2*compression_break[type1]) || isnan(Strength_c[2*i])|| (Strength_c[2 * i + 1] < 0) || (Strength_c[2 * i + 1] > 2*compression_break[type2]) || isnan(Strength_c[2*i+1])
-              || (Strength_t[2 * i ] < 0) || (Strength_t[2 * i] > 2*tensile_break[type1]) || (Strength_t[2 * i + 1] < 0) || (Strength_t[2 * i + 1] > 2*tensile_break[type2])
-              || (Strength_s[2 * i ] < 0) || (Strength_s[2 * i] > 2*shear_break[type1]) || (Strength_s[2 * i + 1] < 0) || (Strength_s[2 * i + 1] > 2*shear_break[type2])        ){
-          j=j+1;
-          N[2 * i] = sqrt(-2.0 * log(random_number[2 * j])) * sin(2 * M_PI * random_number[2 * j + 1]);
-          N[2 * i + 1] = sqrt(-2.0 * log(random_number[2 * j])) * cos(2 * M_PI * random_number[2 * j + 1]);
-          Strength_c[2 * i] = compression_break[type1]*(N[2*i]*CoV_compression[type1]+1);
-          Strength_c[2 * i + 1] = compression_break[type2]*(N[2*i+1]*CoV_compression[type2]+1);
-          Strength_t[2 * i] = tensile_break[type1]*(N[2*i]*CoV_tensile[type1]+1);
-          Strength_t[2 * i + 1] = tensile_break[type2]*(N[2*i+1]*CoV_tensile[type2]+1);
-          Strength_s[2 * i] = shear_break[type1]*(N[2*i]*CoV_shear[type1]+1);
-          Strength_s[2 * i + 1] = shear_break[type2]*(N[2*i+1]*CoV_shear[type2]+1);
-        }
-        j=j+1;  
-
-      }
-      
-      for (int l = 0; l < nbondlist; l++)
-      {
-        bondhistlist[l][ 0] = 0.0;
-        bondhistlist[l][ 1] = 0.0;
-        bondhistlist[l][ 2] = 0.0;
-        bondhistlist[l][ 3] = 0.0;
-        bondhistlist[l][ 4] = 0.0;
-        bondhistlist[l][ 5] = 0.0;
-        bondhistlist[l][ 6] = 0.0;
-        bondhistlist[l][ 7] = 0.0;
-        bondhistlist[l][ 8] = 0.0;
-        bondhistlist[l][ 9] = 0.0;
-        bondhistlist[l][10] = 0.0;
-        bondhistlist[l][11] = 0.0;
-        bondhistlist[l][20] = Strength_c[l];
-        bondhistlist[l][21] = Strength_t[l];
-        bondhistlist[l][22] = Strength_s[l];
-      }
-        
-    }
     compression_strength = fabs(bondhistlist[n][20]);    
     tensile_strength = fabs(bondhistlist[n][21]);
     shear_strength = fabs(bondhistlist[n][22]);
