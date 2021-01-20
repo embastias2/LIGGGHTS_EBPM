@@ -302,14 +302,14 @@ public:
         const double rsq = delx * delx + dely * dely + delz * delz;
         double radj = radius[j];
 
-        if (atom->molecular) {
+        /*if (atom->molecular) {
           if (atom->num_bond[i] > 0 && atom->molecule[i] == atom->molecule[j]) {
             if (sqrt(rsq) < 0.5*(radi+radj)) {
               isBonded = true;
             }
           }
           if (isBonded) continue;
-        }
+        }*/
 
         // In case of multicontact models use the computed delta_ij and delta_ji to expand the radius (on a per contact basis)
         if (pg->storeSumDelta()) {
