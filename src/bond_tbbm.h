@@ -40,6 +40,7 @@ class BondTBBM : public Bond {
   void init_style();
   void compute(int, int);
   void coeff(int, char **);
+  void strength();
   double equilibrium_distance(int);
   void write_restart(FILE *);
   void read_restart(FILE *);
