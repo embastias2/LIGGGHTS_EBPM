@@ -591,7 +591,7 @@ void BondTBBM::compute(int eflag, int vflag)
     Tinv[2][0] = det_Tinv*(T[1][0]*T[2][1] - T[2][0]*T[1][1]);
     Tinv[2][1] = det_Tinv*(T[0][1]*T[2][0] - T[0][0]*T[2][1]);
     Tinv[2][2] = det_Tinv*(T[0][0]*T[1][1] - T[0][1]*T[1][0]);
-    if (det_T < 1.0e-10) {
+    if (fabs(det_T) < 1.0e-10) {
       fprintf(screen,"det_T = %g\n", det_T);
       fprintf(screen,"det_Tinv = %g\n", det_Tinv);
       fprintf(screen,"%g    %g    %g\n", T[0][0],T[0][1],T[0][2]);
