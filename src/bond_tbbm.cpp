@@ -370,6 +370,10 @@ void BondTBBM::compute(int eflag, int vflag)
     T[0][0] = delx*rinv;    
     T[0][1] = dely*rinv;
     T[0][2] = delz*rinv;
+    if (fabs(T[0][0]) <= tol) T[0][0] = 0;
+    if (fabs(T[0][1]) <= tol) T[0][1] = 0;
+    if (fabs(T[0][2]) <= tol) T[0][2] = 0;
+
     if (fabs(T[0][0]) <= tol && fabs(T[0][1]) <= tol && (fabs(T[0][2]-1) <= tol || fabs(T[0][2]+1) <= tol))
     {
       T[1][0] = 0;    
