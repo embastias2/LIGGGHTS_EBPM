@@ -93,7 +93,7 @@ void Neighbor::bond_all()
         sprintf(str,
                 "Bond atoms %d %d missing on proc %d at step " BIGINT_FORMAT,
                 tag[i],bond_atom[i][m],me,update->ntimestep);
-        error->one(FLERR,str);
+        //error->one(FLERR,str);
       }
       atom1 = domain->closest_image(i,atom1);
       if (newton_bond || i < atom1) {
