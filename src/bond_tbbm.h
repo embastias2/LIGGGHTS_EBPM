@@ -62,6 +62,10 @@ class BondTBBM : public Bond {
   double *Strength_s;
   
   void allocate();
+ private:
+  int nStrengthBondalloc;
+  int nFile;
+
 ;
 
 };

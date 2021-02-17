@@ -35,6 +35,7 @@
 #include "vector_liggghts.h"
 #include <math.h>
 #include <ctime>
+#include <fstream>
 
 
 using namespace LAMMPS_NS;
@@ -84,6 +85,7 @@ BondTBBM::BondTBBM(LAMMPS *lmp) : Bond(lmp)
        bond.cpp: void Bond::n_granhistory(int nhist) {ngranhistory = nhist;     atom->n_bondhist = ngranhistory; if(){FLERR}}
        atom_vec_bond_gran.cpp:  memory->grow(atom->bond_hist,nmax,atom->bond_per_atom,atom->n_bondhist,"atom:bond_hist");
      */
+    nFile = 0;
     if(!atom->style_match("bond/gran"))
       error->all(FLERR,"A granular bond style can only be used together with atom style bond/gran");
     if(comm->me == 0)
@@ -181,6 +183,7 @@ void BondTBBM::compute(int eflag, int vflag)
   
  
   for (n = 0; n < nbondlist; n++) { // Loop through Bond list
+    if (nStrengthBondalloc < nbondlist) strength_flag = true;
     if (strength_flag){
       strength();
     }
@@ -773,12 +776,13 @@ void  BondTBBM::strength()
   int **bondlist = neighbor->bondlist;
   double **bondhistlist = neighbor->bondhistlist;
   int nbondlist = neighbor->nbondlist;
-  fprintf(screen,"\n*******************\nSetting strength of %d bonds\n*******************\n\n",nbondlist);
-  
+  fprintf(screen,"\n*************************\nSetting strength of %d bonds\n*************************\n\n",nbondlist);
+  nStrengthBondalloc = nbondlist;
   broken_compression = 0;
   broken_shear = 0;
   broken_tensile = 0;
   broken_total = 0;
+  nFile += 1;
 
   strength_flag = false;
   int type1,type2;
@@ -837,7 +841,12 @@ void  BondTBBM::strength()
     j=j+1;  
 
   }
+  std::ofstream fbondStrength;
+
   
+  std::string str = "bondStrength" + std::to_string(nFile) + ".csv";
+  fbondStrength.open(str);
+  if (fbondStrength.is_open()) fbondStrength << "Bond;Type;Sc;St;Ss" << std::endl;
   for (int l = 0; l < nbondlist; l++)
   {
     bondhistlist[l][ 0] = 0.0;
@@ -855,8 +864,12 @@ void  BondTBBM::strength()
     bondhistlist[l][20] = Strength_c[l];
     bondhistlist[l][21] = Strength_t[l];
     bondhistlist[l][22] = Strength_s[l];
+     
+    if (fbondStrength.is_open())
+      fbondStrength << l << ";" << bondlist[l][2] << ";" << Strength_c[l] << ";" << Strength_t[l] << ";" << Strength_s[l] << std::endl;
   }
-      
+
+  fbondStrength.close();  
   
 }
 
@@ -871,7 +884,7 @@ void BondTBBM::allocate()
   {
     strength_flag = true;
   }
-  
+  fprintf(screen, "nbondtypes: %d\n", n);
   
   // Create bond property variables
   memory->create(ro,n+1,"bond:ro");
@@ -917,7 +930,7 @@ void BondTBBM::coeff(int narg, char **arg)
   double G_one = force->numeric(FLERR,arg[arg_id]);
   
   
-  if (ro_one <= 0){
+  if (ro_one <= 0.0){
     error->all(FLERR,"ro must be greater than 0");
   }
   
